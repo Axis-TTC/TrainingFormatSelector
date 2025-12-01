@@ -19,7 +19,13 @@
     header img{height:72px;border-radius:8px;object-fit:cover;box-shadow:0 6px 18px rgba(2,6,23,0.08);}
     h1{font-size:22px;margin:0;}
     .card{background:var(--card);border-radius:14px;padding:22px;box-shadow:0 6px 30px rgba(2,6,23,0.06);}
-    .question{font-size:18px;margin-bottom:12px;}
+    .question{font-size:18px;margin-bottom:8px;}
+    .questionDescription{
+      margin-bottom:14px;
+      font-size:14px;
+      color:var(--muted);
+      line-height:1.4;
+    }
     .options{display:flex;flex-direction:column;gap:10px;}
     .btn{
       padding:12px 14px;border-radius:10px;border:1px solid var(--button-border);
@@ -56,6 +62,7 @@
 
       <div id="questionWrap">
         <div class="question" id="question"></div>
+        <div class="questionDescription" id="questionDescription"></div>
         <div class="options" id="options"></div>
       </div>
 
@@ -79,11 +86,12 @@
   </div>
 
   <script>
-    // Decision tree nodes with descriptions added
+    // Decision tree nodes including QUESTION DESCRIPTIONS + line break support
     const nodes = {
       start: {
         id: "start",
         question: "External or internal?",
+        description: "Choose whether the content is intended for an external audience or for internal use.\nThis determines what formats are available.",
         options: [
           { label: "External", next: "external_content" },
           { label: "Internal", next: "audience" }
@@ -99,6 +107,7 @@
       audience: {
         id: "audience",
         question: "For all sales or Sales Engineers only?",
+        description: "Decide whether this content applies broadly to everyone in sales,\nor is specifically tailored to Sales Engineers.",
         options: [
           { label: "All sales", next: "traceability_all" },
           { label: "SEs", next: "awareness" }
@@ -108,6 +117,7 @@
       traceability_all: {
         id: "traceability_all",
         question: "Traceability needed?",
+        description: "Choose Yes if you need to track who completed the learning.\nThis typically leads to eLearning formats.",
         options: [
           { label: "Yes", next: "intro_elearning" },
           { label: "No", next: "awareness" }
@@ -117,12 +127,13 @@
       intro_elearning: {
         id: "intro_elearning",
         result: "Introduction eLearning",
-        description: "A short, structured module that provides measurable completion. Ideal for onboarding and broad understanding."
+        description: "Short, trackable modules ideal for onboarding or high-level product introductions."
       },
 
       awareness: {
         id: "awareness",
         question: "Only to raise awareness?",
+        description: "Choose Yes if the primary goal is awareness, not deep learning or technical instruction.",
         options: [
           { label: "Yes", next: "need_resources" },
           { label: "No", next: "indepth" }
@@ -132,6 +143,7 @@
       need_resources: {
         id: "need_resources",
         question: "Need to share resources?",
+        description: "Choose Yes if supporting documents, links, or materials must be included.",
         options: [
           { label: "Yes", next: "tech_doc" },
           { label: "No", next: "result_internalvideo" }
@@ -141,6 +153,7 @@
       tech_doc: {
         id: "tech_doc",
         question: "Need to share technical documentation?",
+        description: "Decide whether detailed instructions or technical references are required.",
         options: [
           { label: "Yes", next: "detailed_instructions" },
           { label: "No", next: "result_internalvideo" }
@@ -150,6 +163,7 @@
       detailed_instructions: {
         id: "detailed_instructions",
         question: "Detailed instructions?",
+        description: "Choose Yes if step-by-step guidance is needed.\nChoose No if only general info is required.",
         options: [
           { label: "Yes", next: "library" },
           { label: "No", next: "senews" }
@@ -159,24 +173,25 @@
       library: {
         id: "library",
         result: "The Library",
-        description: "Best for in-depth documentation, detailed instructions, and content that needs to be searchable and permanent."
+        description: "Best for long-form documentation, configuration guides, and detailed technical content."
       },
 
       senews: {
         id: "senews",
         result: "SE News article",
-        description: "Use for quick updates, announcements, and awareness-boosting info aimed at Sales Engineers."
+        description: "Useful for announcements, awareness updates, or sharing highlights with Sales Engineers."
       },
 
       result_internalvideo: {
         id: "result_internalvideo",
         result: "Internal video (Grab 'n go)",
-        description: "Perfect for short, simple explanations or demos that internal teams can watch on demand."
+        description: "Short, fast, and simple — ideal for short explanations or informal demos."
       },
 
       indepth: {
         id: "indepth",
         question: "In-depth technical training?",
+        description: "Choose Yes if the topic requires deeper hands-on learning or advanced concepts.",
         options: [
           { label: "Yes", next: "region_specific" },
           { label: "No", next: "webinar_or_podcast" }
@@ -186,6 +201,7 @@
       region_specific: {
         id: "region_specific",
         question: "Targets a specific region?",
+        description: "Choose Yes if the training is for one region (e.g. EMEA).\nChoose No for content relevant globally.",
         options: [
           { label: "Yes", next: "regional_event" },
           { label: "No", next: "live_discussion" }
@@ -195,12 +211,13 @@
       regional_event: {
         id: "regional_event",
         result: "Regional event",
-        description: "Live, region-targeted sessions for specific markets, teams, or technologies."
+        description: "Live sessions tailored for a specific region, local challenges, or market-specific topics."
       },
 
       live_discussion: {
         id: "live_discussion",
         question: "Live discussion?",
+        description: "Choose Yes when interaction, Q&A, or live demonstration is important.",
         options: [
           { label: "Yes", next: "online_or_inperson" },
           { label: "No", next: "traceability_ws" }
@@ -210,6 +227,7 @@
       online_or_inperson: {
         id: "online_or_inperson",
         question: "Online or in person?",
+        description: "Select the delivery format that best fits the audience and content type.",
         options: [
           { label: "Online", next: "online_workshop" },
           { label: "In person", next: "inperson_event" }
@@ -219,18 +237,19 @@
       online_workshop: {
         id: "online_workshop",
         result: "Online workshop / Webinar",
-        description: "Ideal for interactive or instructor-led sessions delivered remotely."
+        description: "Ideal for remote interactive training or structured presentations."
       },
 
       inperson_event: {
         id: "inperson_event",
         result: "Panel discussion, Tech talk, or Hands-on workshop",
-        description: "Best for deeper engagement, practical learning, and long-form discussions."
+        description: "Best for deeper engagement, collaboration, and hands-on technical practice."
       },
 
       traceability_ws: {
         id: "traceability_ws",
         question: "Traceability needed?",
+        description: "Choose Yes if completion needs to be measured.\nChoose No for flexible, informal formats.",
         options: [
           { label: "Yes", next: "elearning" },
           { label: "No", next: "selfpaced" }
@@ -240,19 +259,19 @@
       elearning: {
         id: "elearning",
         result: "eLearning",
-        description: "Structured and trackable learning for more advanced or targeted content."
+        description: "Structured, trackable, and suitable for advanced or formal training."
       },
 
       selfpaced: {
         id: "selfpaced",
         result: "Self-paced workshop",
-        description: "Hands-on content that participants complete on their own time."
+        description: "Learners complete the training at their own speed, typically hands-on material."
       },
 
       webinar_or_podcast: {
         id: "webinar_or_podcast",
         result: "Webinar or Podcast",
-        description: "Good for storytelling, interviews, thought leadership, and flexible listening."
+        description: "Great for stories, interviews, and broader messaging without deep technical details."
       }
     };
 
@@ -263,6 +282,7 @@
     }
 
     const questionEl = document.getElementById("question");
+    const questionDescriptionEl = document.getElementById("questionDescription");
     const optionsEl = document.getElementById("options");
     const resultWrap = document.getElementById("resultWrap");
     const resultEl = document.getElementById("result");
@@ -289,6 +309,7 @@
       if (node.result) {
         document.getElementById("questionWrap").style.display = "none";
         resultWrap.style.display = "block";
+
         resultEl.textContent = node.result;
         resultDescriptionEl.innerHTML = (node.description || "").replace(/\n/g, "<br>");
         return;
@@ -296,9 +317,10 @@
 
       document.getElementById("questionWrap").style.display = "block";
       resultWrap.style.display = "none";
-      resultDescriptionEl.textContent = "";
 
       questionEl.textContent = node.question || "";
+      questionDescriptionEl.innerHTML = (node.description || "").replace(/\n/g, "<br>");
+
       optionsEl.innerHTML = "";
 
       if (node.options && node.options.length) {
