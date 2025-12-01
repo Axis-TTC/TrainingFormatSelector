@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Training Format Selector</title>
+  <style>
+    :root{
+      --bg:#f3f6f8;
+      --card:#ffffff;
+      --accent:#0f6fff;
+      --muted:#6b7280;
+      --button-border:#e5e7eb;
+    }
+    *{box-sizing:border-box;font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;}
+    body{margin:0;background:var(--bg);color:#111827;display:flex;align-items:flex-start;justify-content:center;padding:28px;}
+    .container{width:100%;max-width:980px;}
+    header{display:flex;gap:16px;align-items:center;margin-bottom:18px;}
+    header img{height:72px;border-radius:8px;object-fit:cover;box-shadow:0 6px 18px rgba(2,6,23,0.08);}
+    h1{font-size:22px;margin:0;}
+    .card{background:var(--card);border-radius:14px;padding:22px;box-shadow:0 6px 30px rgba(2,6,23,0.06);}
+    .question{font-size:18px;margin-bottom:12px;}
+    .options{display:flex;flex-direction:column;gap:10px;}
+    .btn{
+      padding:12px 14px;border-radius:10px;border:1px solid var(--button-border);
+      background:transparent;text-align:left;cursor:pointer;font-size:15px;
+      transition:transform .06s ease,background .08s;
+    }
+    .btn:hover{transform:translateY(-1px);background:#f8fafc;}
+    .result{padding:18px;border-radius:10px;background:#f8fafc;margin-top:10px;font-weight:600;}
+    .controls{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+    .small{font-size:13px;padding:8px 10px;border-radius:8px;border:1px solid var(--button-border);background:#fff;cursor:pointer;}
+    .crumbs{font-size:13px;color:var(--muted);margin-bottom:10px;}
+    footer{margin-top:12px;font-size:13px;color:var(--muted);}
+    @media (max-width:520px){ header img{display:none} .card{padding:16px} }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <!-- Local image path supplied by user / developer: -->
+      <img src="https://axis365.sharepoint.com/:i:/r/sites/thelibrary/Shared%20Documents/flow.png?csf=1&web=1&e=NjAFUg" alt="Flowchart" />
+      <div>
+        <h1>Training Format Selector</h1>
+        <div style="color:var(--muted);font-size:13px">Click choices to reach a recommended format</div>
+      </div>
+    </header>
+
+    <div class="card" id="app">
+      <div class="crumbs" id="crumbs"></div>
+
+      <div id="questionWrap">
+        <div class="question" id="question"></div>
+        <div class="options" id="options"></div>
+      </div>
+
+      <div id="resultWrap" style="display:none">
+        <div class="result" id="result"></div>
+        <div class="controls">
+          <button class="small" id="restartBtn">Start over</button>
+        </div>
+      </div>
+
+      <div class="controls" style="margin-top:8px">
+        <button class="small" id="backBtn" disabled>← Back</button>
+        <button class="small" id="showFlowBtn">Show flowchart (open image)</button>
+      </div>
+
+      <footer>
+        Tip: use Back to change a previous choice. The result shows the recommended format.
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    // Decision tree nodes (mirrors the React structure)
+    const nodes = {
+      start: {
+        id: "start",
+        question: "External or internal?",
+        options: [
+          { label: "External", next: "external_content" },
+          { label: "Internal", next: "audience" }
+        ]
+      },
+
+      external_content: { id: "external_content", result: "External video / Whitepaper" },
+
+      audience: {
+        id: "audience",
+        question: "For all sales or Sales Engineers only?",
+        options: [
+          { label: "All sales", next: "traceability_all" },
+          { label: "SEs", next: "awareness" }
+        ]
+      },
+
+      traceability_all: {
+        id: "traceability_all",
+        question: "Traceability needed?",
+        options: [
+          { label: "Yes", next: "intro_elearning" },
+          { label: "No", next: "awareness" }
+        ]
+      },
+
+      traceability_ses: {
+        id: "traceability_ses",
+        question: "Traceability needed?",
+        options: [
+          { label: "Yes", next: "intro_elearning" },
+          { label: "No", next: "awareness" }
+        ]
+      },
+
+      intro_elearning: { id: "intro_elearning", result: "Introduction eLearning" },
+
+      awareness: {
+        id: "awareness",
+        question: "Only to raise awareness?",
+        options: [
+          { label: "Yes", next: "need_resources" },
+          { label: "No", next: "indepth" }
+        ]
+      },
+
+      need_resources: {
+        id: "need_resources",
+        question: "Need to share resources?",
+        options: [
+          { label: "Yes", next: "tech_doc" },
+          { label: "No", next: "result_internalvideo" }
+        ]
+      },
+
+      tech_doc: {
+        id: "tech_doc",
+        question: "Need to share technical documentation?",
+        options: [
+          { label: "Yes", next: "detailed_instructions" },
+          { label: "No", next: "result_internalvideo" }
+        ]
+      },
+
+      detailed_instructions: {
+        id: "detailed_instructions",
+        question: "Detailed instructions?",
+        options: [
+          { label: "Yes", next: "library" },
+          { label: "No", next: "senews" }
+        ]
+      },
+
+      library: { id: "library", result: "Library" },
+      senews: { id: "senews", result: "SE News article" },
+      result_internalvideo: { id: "result_internalvideo", result: "Internal video (Grab 'n go)" },
+
+      indepth: {
+        id: "indepth",
+        question: "In-depth technical training?",
+        options: [
+          { label: "Yes", next: "region_specific" },
+          { label: "No", next: "webinar_or_podcast" }
+        ]
+      },
+
+      region_specific: {
+        id: "region_specific",
+        question: "Targets a specific region?",
+        options: [
+          { label: "Yes", next: "regional_event" },
+          { label: "No", next: "live_discussion" }
+        ]
+      },
+
+      regional_event: { id: "regional_event", result: "Regional event" },
+
+      live_discussion: {
+        id: "live_discussion",
+        question: "Live discussion?",
+        options: [
+          { label: "Yes", next: "online_or_inperson" },
+          { label: "No", next: "traceability_ws" }
+        ]
+      },
+
+      online_or_inperson: {
+        id: "online_or_inperson",
+        question: "Online or in person?",
+        options: [
+          { label: "Online", next: "online_workshop" },
+          { label: "In person", next: "inperson_event" }
+        ]
+      },
+
+      online_workshop: { id: "online_workshop", result: "Online workshop / Webinar" },
+
+      inperson_event: { id: "inperson_event", result: "Panel discussion, Tech talk, or Hands-on workshop" },
+
+      traceability_ws: {
+        id: "traceability_ws",
+        question: "Traceability needed?",
+        options: [
+          { label: "Yes", next: "elearning" },
+          { label: "No", next: "selfpaced" }
+        ]
+      },
+
+      elearning: { id: "elearning", result: "eLearning" },
+
+      selfpaced: { id: "selfpaced", result: "Self-paced workshop" },
+
+      webinar_or_podcast: { id: "webinar_or_podcast", result: "Webinar or Podcast" }
+    };
+
+    // App state: current node id and history
+    let history = ["start"]; // stack of node ids
+
+    function currentNode() {
+      return nodes[history[history.length - 1]];
+    }
+
+    // DOM elements
+    const questionEl = document.getElementById("question");
+    const optionsEl = document.getElementById("options");
+    const resultWrap = document.getElementById("resultWrap");
+    const resultEl = document.getElementById("result");
+    const restartBtn = document.getElementById("restartBtn");
+    const backBtn = document.getElementById("backBtn");
+    const crumbsEl = document.getElementById("crumbs");
+    const showFlowBtn = document.getElementById("showFlowBtn");
+
+    function render() {
+      const node = currentNode();
+
+      // breadcrumbs
+      crumbsEl.textContent = history.map((id, i) => {
+        const n = nodes[id];
+        if (!n) return id;
+        if (n.question) return n.question;
+        if (n.result) return n.result;
+        return id;
+      }).join(" → ");
+
+      backBtn.disabled = history.length <= 1;
+
+      // if result node
+      if (node.result) {
+        document.getElementById("questionWrap").style.display = "none";
+        resultWrap.style.display = "block";
+        resultEl.textContent = node.result;
+        return;
+      }
+
+      // question node
+      document.getElementById("questionWrap").style.display = "block";
+      resultWrap.style.display = "none";
+      questionEl.textContent = node.question || "";
+      optionsEl.innerHTML = "";
+
+      if (node.options && node.options.length) {
+        node.options.forEach(opt => {
+          const b = document.createElement("button");
+          b.className = "btn";
+          b.type = "button";
+          b.textContent = opt.label;
+          b.onclick = () => choose(opt.next);
+          optionsEl.appendChild(b);
+        });
+      } else {
+        // fallback: no options and no result
+        const fallback = document.createElement("div");
+        fallback.textContent = "No further options.";
+        optionsEl.appendChild(fallback);
+      }
+    }
+
+    function choose(nextId) {
+      if (!nodes[nextId]) {
+        alert("Next node missing: " + nextId);
+        return;
+      }
+      history.push(nextId);
+      render();
+    }
+
+    restartBtn.onclick = () => {
+      history = ["start"];
+      render();
+    };
+
+    backBtn.onclick = () => {
+      if (history.length <= 1) return;
+      history.pop();
+      render();
+    };
+
+    showFlowBtn.onclick = () => {
+      // open the uploaded flowchart in a new tab/window.
+      // Developer-supplied local path (will be transformed on your side):
+      const imgPath = "https://axis365.sharepoint.com/:i:/r/sites/thelibrary/Shared%20Documents/flow.png?csf=1&web=1&e=NjAFUg";
+      // Attempt to open it:
+      window.open(imgPath, "_blank");
+    };
+
+    // initial render
+    render();
+  </script>
+</body>
+</html>
