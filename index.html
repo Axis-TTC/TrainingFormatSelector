@@ -93,7 +93,7 @@
       external_content: {
         id: "external_content",
         result: "External video / Whitepaper",
-        description: "Use this when strong third-party content already exists, especially for high-level awareness or thought-leadership topics."
+        description: "External video: Content? Updates on new features, products, or solutions. Often includes recorded screens demonstrating usage. May require action (e.g., "Try this yourself"). Should always provide new insights. \nWhen to use? When introducing new product features, updates, or walkthroughs, and you want to reach an external audience."
       },
 
       audience: {
@@ -290,7 +290,7 @@
         document.getElementById("questionWrap").style.display = "none";
         resultWrap.style.display = "block";
         resultEl.textContent = node.result;
-        resultDescriptionEl.textContent = node.description || "";
+        resultDescriptionEl.innerHTML = (node.description || "").replace(/\n/g, "<br>");
         return;
       }
 
