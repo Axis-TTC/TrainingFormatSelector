@@ -28,6 +28,12 @@
     }
     .btn:hover{transform:translateY(-1px);background:#f3f6f8;}
     .result{padding:18px;border-radius:10px;background:#f3f6f8;margin-top:10px;font-weight:600;}
+    .resultDescription{
+      margin-top:6px;
+      font-size:14px;
+      color:var(--muted);
+      line-height:1.4;
+    }
     .controls{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
     .small{font-size:13px;padding:8px 10px;border-radius:8px;border:1px solid var(--button-border);background:#fff;cursor:pointer;}
     .crumbs{font-size:13px;color:var(--muted);margin-bottom:10px;}
@@ -38,7 +44,6 @@
 <body>
   <div class="container">
     <header>
-      <!-- Local image path supplied by user / developer: -->
       <img src="https://axis365.sharepoint.com/:i:/r/sites/thelibrary/Shared%20Documents/flow.png?csf=1&web=1&e=NjAFUg" alt="Flowchart" />
       <div>
         <h1>This tool will help you find the best way to deliver your training</h1>
@@ -56,6 +61,7 @@
 
       <div id="resultWrap" style="display:none">
         <div class="result" id="result"></div>
+        <div class="resultDescription" id="resultDescription"></div>
         <div class="controls">
           <button class="small" id="restartBtn">Start over</button>
         </div>
@@ -73,7 +79,7 @@
   </div>
 
   <script>
-    // Decision tree nodes (mirrors the React structure)
+    // Decision tree nodes with descriptions added
     const nodes = {
       start: {
         id: "start",
@@ -84,7 +90,11 @@
         ]
       },
 
-      external_content: { id: "external_content", result: "External video / Whitepaper" },
+      external_content: {
+        id: "external_content",
+        result: "External video / Whitepaper",
+        description: "Use this when strong third-party content already exists, especially for high-level awareness or thought-leadership topics."
+      },
 
       audience: {
         id: "audience",
@@ -104,16 +114,11 @@
         ]
       },
 
-      traceability_ses: {
-        id: "traceability_ses",
-        question: "Traceability needed?",
-        options: [
-          { label: "Yes", next: "intro_elearning" },
-          { label: "No", next: "awareness" }
-        ]
+      intro_elearning: {
+        id: "intro_elearning",
+        result: "Introduction eLearning",
+        description: "A short, structured module that provides measurable completion. Ideal for onboarding and broad understanding."
       },
-
-      intro_elearning: { id: "intro_elearning", result: "Introduction eLearning" },
 
       awareness: {
         id: "awareness",
@@ -151,9 +156,23 @@
         ]
       },
 
-      library: { id: "library", result: "Library" },
-      senews: { id: "senews", result: "SE News article" },
-      result_internalvideo: { id: "result_internalvideo", result: "Internal video (Grab 'n go)" },
+      library: {
+        id: "library",
+        result: "Library",
+        description: "Best for in-depth documentation, detailed instructions, and content that needs to be searchable and permanent."
+      },
+
+      senews: {
+        id: "senews",
+        result: "SE News article",
+        description: "Use for quick updates, announcements, and awareness-boosting info aimed at Sales Engineers."
+      },
+
+      result_internalvideo: {
+        id: "result_internalvideo",
+        result: "Internal video (Grab 'n go)",
+        description: "Perfect for short, simple explanations or demos that internal teams can watch on demand."
+      },
 
       indepth: {
         id: "indepth",
@@ -173,7 +192,11 @@
         ]
       },
 
-      regional_event: { id: "regional_event", result: "Regional event" },
+      regional_event: {
+        id: "regional_event",
+        result: "Regional event",
+        description: "Live, region-targeted sessions for specific markets, teams, or technologies."
+      },
 
       live_discussion: {
         id: "live_discussion",
@@ -193,9 +216,17 @@
         ]
       },
 
-      online_workshop: { id: "online_workshop", result: "Online workshop / Webinar" },
+      online_workshop: {
+        id: "online_workshop",
+        result: "Online workshop / Webinar",
+        description: "Ideal for interactive or instructor-led sessions delivered remotely."
+      },
 
-      inperson_event: { id: "inperson_event", result: "Panel discussion, Tech talk, or Hands-on workshop" },
+      inperson_event: {
+        id: "inperson_event",
+        result: "Panel discussion, Tech talk, or Hands-on workshop",
+        description: "Best for deeper engagement, practical learning, and long-form discussions."
+      },
 
       traceability_ws: {
         id: "traceability_ws",
@@ -206,25 +237,37 @@
         ]
       },
 
-      elearning: { id: "elearning", result: "eLearning" },
+      elearning: {
+        id: "elearning",
+        result: "eLearning",
+        description: "Structured and trackable learning for more advanced or targeted content."
+      },
 
-      selfpaced: { id: "selfpaced", result: "Self-paced workshop" },
+      selfpaced: {
+        id: "selfpaced",
+        result: "Self-paced workshop",
+        description: "Hands-on content that participants complete on their own time."
+      },
 
-      webinar_or_podcast: { id: "webinar_or_podcast", result: "Webinar or Podcast" }
+      webinar_or_podcast: {
+        id: "webinar_or_podcast",
+        result: "Webinar or Podcast",
+        description: "Good for storytelling, interviews, thought leadership, and flexible listening."
+      }
     };
 
-    // App state: current node id and history
-    let history = ["start"]; // stack of node ids
+    let history = ["start"];
 
     function currentNode() {
       return nodes[history[history.length - 1]];
     }
 
-    // DOM elements
     const questionEl = document.getElementById("question");
     const optionsEl = document.getElementById("options");
     const resultWrap = document.getElementById("resultWrap");
     const resultEl = document.getElementById("result");
+    const resultDescriptionEl = document.getElementById("resultDescription");
+
     const restartBtn = document.getElementById("restartBtn");
     const backBtn = document.getElementById("backBtn");
     const crumbsEl = document.getElementById("crumbs");
@@ -233,8 +276,7 @@
     function render() {
       const node = currentNode();
 
-      // breadcrumbs
-      crumbsEl.textContent = history.map((id, i) => {
+      crumbsEl.textContent = history.map((id) => {
         const n = nodes[id];
         if (!n) return id;
         if (n.question) return n.question;
@@ -244,17 +286,18 @@
 
       backBtn.disabled = history.length <= 1;
 
-      // if result node
       if (node.result) {
         document.getElementById("questionWrap").style.display = "none";
         resultWrap.style.display = "block";
         resultEl.textContent = node.result;
+        resultDescriptionEl.textContent = node.description || "";
         return;
       }
 
-      // question node
       document.getElementById("questionWrap").style.display = "block";
       resultWrap.style.display = "none";
+      resultDescriptionEl.textContent = "";
+
       questionEl.textContent = node.question || "";
       optionsEl.innerHTML = "";
 
@@ -268,7 +311,6 @@
           optionsEl.appendChild(b);
         });
       } else {
-        // fallback: no options and no result
         const fallback = document.createElement("div");
         fallback.textContent = "No further options.";
         optionsEl.appendChild(fallback);
@@ -296,14 +338,9 @@
     };
 
     showFlowBtn.onclick = () => {
-      // open the uploaded flowchart in a new tab/window.
-      // Developer-supplied local path (will be transformed on your side):
-      const imgPath = "https://axis365.sharepoint.com/:i:/r/sites/thelibrary/Shared%20Documents/flow.png?csf=1&web=1&e=NjAFUg";
-      // Attempt to open it:
-      window.open(imgPath, "_blank");
+      window.open("https://axis365.sharepoint.com/:i:/r/sites/thelibrary/Shared%20Documents/flow.png?csf=1&web=1&e=NjAFUg", "_blank");
     };
 
-    // initial render
     render();
   </script>
 </body>
