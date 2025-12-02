@@ -186,7 +186,6 @@ To update the tool:
 1. Add a new node  
 2. Give it an `id`, `question`, or `result`  
 3. Add a `description` (optional, supports `\n`)  
-4. Connect it using `next:`  
-5. Save and upload the file to SharePoint  
+4. Connect it using `next:`   
 
 ---
